@@ -346,6 +346,7 @@ class ParsePipelineOrchestrator:
                 "cast_failed": len(cast_failed),
                 "normalized_rows": len(normalized),
                 "unit_refused": refused,
+                "unit_consumptions": self.transform.get_unit_consumptions(batch_id),
                 "contract_failures": check.failures,
                 "message": ";".join(check.failures) if not passed else "契约通过"}
 

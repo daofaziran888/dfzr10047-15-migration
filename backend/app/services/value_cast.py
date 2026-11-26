@@ -139,6 +139,34 @@ class ValueCastService(BaseModuleService):
             created.append(quarantine_no)
         return created
 
+    def handoff_to_normalize(self, cast_no: str, field: str, raw_value: Any,
+                             source_unit: str, channel: str,
+                             hit_date: str, execute_time: str) -> dict[str, Any]:
+        """把转型准备好的数值交给归一系数清单计算归一字段并落换算凭据。"""
+        from app.services.normalize_manifest import submit_handoff
+
+        rule = next(
+            (r for r in store.rows(self.MODULE) if r.get("转型编号") == cast_no), None)
+        if rule is None:
+            return {"ok": False, "message": f"转型规则 {cast_no} 不存在"}
+        precision_text = str(rule.get("数值精度") or "").strip()
+        ok, value, reason = self.cast_value(
+            raw_value, str(rule.get("目标类型") or ""),
+            str(rule.get("日期格式约定") or ""),
+            int(precision_text) if precision_text.isdigit() else 0, None)
+        if not ok:
+            return {"ok": False, "message": f"转型 {cast_no} 未通过：{reason}"}
+        result = submit_handoff({
+            "转型编号": cast_no,
+            "字段名称": field,
+            "原始取值": value,
+            "原始单位": source_unit,
+            "适用来源": channel,
+            "命中日期": hit_date,
+        }, at=execute_time)
+        result["转型取值"] = value
+        return result
+
     def failure_summary(self, cast_no: str) -> dict[str, Any]:
         """输出规则的失败计数，供解析指标与坏行隔离对账。"""
         for rule in store.rows(self.MODULE):

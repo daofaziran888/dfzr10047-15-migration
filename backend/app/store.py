@@ -23,6 +23,8 @@ class Store:
         self._tables = {
             name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
         }
+        from app.services import normalize_manifest
+        normalize_manifest.reset_state()
 
     def rows(self, module: str) -> list[dict[str, Any]]:
         return self._tables.setdefault(module, [])

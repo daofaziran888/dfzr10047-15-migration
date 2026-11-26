@@ -70,3 +70,33 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .analysis-chart { display: flex; align-items: flex-end; gap: 8px; height: 160px; padding: 12px 0; }
 .analysis-bar { flex: 1; border-radius: 4px 4px 0 0; background: var(--brand); min-width: 24px; position: relative; transition: height 0.4s; }
 .analysis-bar span { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--muted); white-space: nowrap; }
+
+/* 版本化归一系数清单 */
+.flash-text { color: #15803d; font-size: 13px; }
+.warning-text { color: #b45309; font-size: 13px; }
+.tab-bar { display: flex; gap: 6px; margin: 8px 0 12px; flex-wrap: wrap; }
+.tab { border: 1px solid var(--border); background: #fff; border-radius: 999px; padding: 5px 14px; font-size: 13px; cursor: pointer; }
+.tab.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.panel { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.panel-head h3 { margin: 0; font-size: 15px; }
+.panel h4 { margin: 16px 0 6px; font-size: 13px; }
+.hint { color: var(--muted); font-size: 12px; }
+.tag { display: inline-block; border-radius: 4px; padding: 1px 8px; font-size: 12px; }
+.tag.versioned { background: #dcfce7; color: #166534; }
+.tag.legacy { background: #fef3c7; color: #92400e; }
+.inline-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.mini-input { width: 84px; border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; font-size: 12px; }
+.compute-result { font-size: 12px; color: #166534; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.manifest-content { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font-family: ui-monospace, monospace; font-size: 12px; }
+.convention-list { margin: 4px 0 8px; padding-left: 18px; font-size: 12px; color: var(--muted); }
+.receipt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 8px 0; font-size: 13px; }
+.receipt-groups { font-size: 12px; margin: 8px 0; }
+.receipt-group { display: flex; gap: 8px; padding: 3px 0; border-bottom: 1px dashed #eef1f5; flex-wrap: wrap; }
+.factor-cell { display: flex; gap: 6px; align-items: center; font-size: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+.credential-panel { border-color: #86efac; }
+.credential-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px 16px; margin: 8px 0; }
+.credential-grid dt { font-size: 12px; color: var(--muted); }
+.credential-grid dd { margin: 0; font-size: 13px; }
+.snapshot { background: #0f172a; color: #e2e8f0; border-radius: 6px; padding: 10px; font-size: 12px; overflow-x: auto; }

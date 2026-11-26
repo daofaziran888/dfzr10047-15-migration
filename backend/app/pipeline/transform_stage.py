@@ -74,7 +74,7 @@ class UnitFactor:
 
     def __init__(self, factor_id: str, field_name: str, source_unit: str,
                  target_unit: str, multiplier: float, applies_to: str,
-                 effective_from: str):
+                 effective_from: str, manifest_version: str = ""):
         self.factor_id = factor_id
         self.field_name = field_name
         self.source_unit = source_unit
@@ -82,6 +82,7 @@ class UnitFactor:
         self.multiplier = multiplier
         self.applies_to = applies_to
         self.effective_from = effective_from
+        self.manifest_version = manifest_version
         self.status = "已生效"
 
     def to_dict(self) -> dict[str, Any]:
@@ -93,6 +94,7 @@ class UnitFactor:
             "multiplier": self.multiplier,
             "applies_to": self.applies_to,
             "effective_from": self.effective_from,
+            "manifest_version": self.manifest_version or "无版本存量",
             "status": self.status,
         }
 
@@ -106,6 +108,7 @@ class TransformStage:
         self._unit_factors: dict[str, UnitFactor] = {}
         self._cast_failures: list[dict[str, Any]] = []
         self._conflicts: list[dict[str, Any]] = []
+        self._unit_consumptions: list[dict[str, Any]] = []
 
     # ---------- 嵌套展平 ----------
 
@@ -291,7 +294,10 @@ class TransformStage:
 
     def normalize_units(self, batch_id: str, channel: str,
                         rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-        """按来源归一单位。返回 (归一后的行, 被拒绝归一的字段清单)。"""
+        """按来源归一单位。返回 (归一后的行, 被拒绝归一的字段清单)。
+
+        每个换算都记录当次实际消费的清单版本，导出与历史回看都以该版本为准。
+        """
         refused: list[dict[str, Any]] = []
         out_rows: list[dict[str, Any]] = []
 
@@ -323,9 +329,27 @@ class TransformStage:
                 if isinstance(raw, (int, float)):
                     new_row[field] = round(raw * active.multiplier, 6)
                     new_row[f"__unit_{field}"] = active.target_unit
+                    new_row[f"__factor_{field}"] = active.factor_id
+                    new_row[f"__version_{field}"] = (
+                        active.manifest_version or "无版本存量")
+                    self._unit_consumptions.append({
+                        "batch_id": batch_id,
+                        "channel": channel,
+                        "field_name": field,
+                        "factor_id": active.factor_id,
+                        "manifest_version": active.manifest_version or "无版本存量",
+                        "raw_value": raw,
+                        "normalized_value": new_row[field],
+                        "target_unit": active.target_unit,
+                    })
             out_rows.append(new_row)
 
         return out_rows, refused
+
+    def get_unit_consumptions(self, batch_id: str | None = None) -> list[dict[str, Any]]:
+        if batch_id is None:
+            return list(self._unit_consumptions)
+        return [item for item in self._unit_consumptions if item["batch_id"] == batch_id]
 
     def get_conflicts(self) -> list[dict[str, Any]]:
         return list(self._conflicts)
@@ -337,4 +361,5 @@ class TransformStage:
             "unit_factors": {k: v.to_dict() for k, v in self._unit_factors.items()},
             "cast_failures": list(self._cast_failures),
             "unit_conflicts": list(self._conflicts),
+            "unit_consumptions": list(self._unit_consumptions),
         }

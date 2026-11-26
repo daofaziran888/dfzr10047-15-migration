@@ -62,7 +62,7 @@ npm run dev
 | 分隔规则 | `delimiter_rule` | 规则条目 | 规则编号、适用格式、分隔符 |
 | 嵌套展平 | `nested_flatten` | 展平路径 | 展平编号、关联模板、原始路径 |
 | 取值转型 | `value_cast` | 转型规则 | 转型编号、目标类型、来源类型 |
-| 单位归一 | `unit_normalize` | 归一系数 | 归一编号、字段名称、原始单位 |
+| 单位归一 | `unit_normalize` | 归一系数 | 归一编号、字段名称、原始单位（完整清单页见下文） |
 | 输出契约 | `output_contract` | 契约条目 | 契约编号、关联批次、输出列集合 |
 | 结果投递 | `result_deliver` | 投递记录 | 投递记录编号、关联契约、目标位置 |
 | 解析水位 | `parse_watermark` | 水位读数 | 水位编号、来源渠道、已解析至位点 |
@@ -72,6 +72,39 @@ npm run dev
 | 解析指标 | `parse_metric` | 指标读数 | 指标读数编号、统计窗口、来源渠道 |
 | 模板差异 | `tmpl_diff` | 差异条目 | 差异编号、旧模板版本、新模板版本 |
 | 投递审计 | `intake_audit` | 审计条目 | 审计编号、关联对象、操作类型 |
+
+## 单位归一的版本化系数清单
+
+`/unit_normalize` 是独立页面（`frontend/src/views/NormalizeView.vue`），后端在
+`backend/app/services/normalize_manifest.py`，接口统一挂在 `/api/normalize/*`：
+
+| 接口 | 作用 |
+| --- | --- |
+| `GET /api/normalize/legacy` | 存量系数；无版本条目照样按原始系数计算 |
+| `POST /api/normalize/legacy/{归一编号}/compute` | 用指定系数计算原值 |
+| `POST /api/normalize/import/preview` | 预检：影响在途转型的条目、冲突值、兼容约定违规 |
+| `POST /api/normalize/import` | 登记版本；同一内容指纹只登记一次，可 `pause_after` 只写一部分 |
+| `POST /api/normalize/import/{清单编号}/pause` | 暂停导入 |
+| `POST /api/normalize/import/{清单编号}/resume` | 用同一文件恢复，只补未完成/失败条目，指纹不符直接拒绝 |
+| `POST /api/normalize/import/{清单编号}/retry-failed` | 只处理失败条目的操作 |
+| `POST /api/normalize/import/{清单编号}/rollback` | 回滚版本，停用该清单写入的因子，历史凭据不变 |
+| `GET /api/normalize/conflicts` | 冲突页：已生效因子与待补核验条目分开列出 |
+| `POST /api/normalize/conflicts/{条目id}/resolve` | 裁决 `保留新` / `保留旧` |
+| `POST /api/normalize/handoffs` | 取值转型把准备好的数值交给清单计算并落换算凭据 |
+| `GET /api/normalize/conversions?version=` | 换算清单，按消费版本筛选 |
+| `GET /api/normalize/conversions/{转型编号}/credential` | 从转型历史打开当次实际换算凭据 |
+| `GET /api/normalize/conversions/export?version=` | 导出对应版本的换算清单 |
+
+关键约定：
+
+- 同一来源、同一字段、同一原始单位只允许一条生效因子。已生效时再导入不同系数，
+  旧因子保持生效，新条目进入「冲突待核验」，不自动覆盖。
+- 导入提交后返回版本回执，含兼容校验结论、条目分组（已生效 / 待核验 / 失败 / 待导入）、
+  影响在途转型清单，以及 `可继续处理`、`可回滚` 两个开关。
+- 换算凭据保存当次消费的因子快照；回滚清单或替换系数都不改写历史凭据。
+- 种子数据里 `UN-006`（A=1000）已迁入 `NM-v1`，`UN-001` 等仍是「无版本存量」。
+- 取值转型工作台每行多一个「换算凭据」入口，跳到本页按 `?tab=conversions&cast=VC-xxx`
+  直接打开当次实际换算凭据。
 
 ## 约定
 
